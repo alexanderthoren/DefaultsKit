@@ -83,12 +83,17 @@ extension UserDefaultsRepository {
 
 #if DEBUG
     extension UserDefaultsRepository {
-        public static var testValue: Self {
-            UserDefaultsRepository(
-                get: { _ in fatalError("get not implemented") },
-                set: { _, _ in fatalError("set not implemented") },
-                remove: { _ in fatalError("remove not implemented") },
-                stream: { _ in fatalError("stream not implemented") }
+        public static func testValue(
+            get: (@Sendable (any Keyable) -> AnySendable)? = nil,
+            set: (@Sendable (AnySendable, any Keyable) -> Void)? = nil,
+            remove: (@Sendable (any Keyable) -> Void)? = nil,
+            stream: (@Sendable (any Keyable) -> AsyncStream<AnySendable>)? = nil
+        ) -> Self {
+            .init(
+                get: get ?? { _ in fatalError("get not implemented") },
+                set: set ?? { _, _ in fatalError("set not implemented") },
+                remove: remove ?? { _ in fatalError("remove not implemented") },
+                stream: stream ?? { _ in fatalError("stream not implemented") }
             )
         }
     }
