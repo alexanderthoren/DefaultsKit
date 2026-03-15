@@ -19,7 +19,7 @@ public struct AnyKey<T: Sendable>: Keyable {
 
 extension Keyables {
     /// Helper to create a key with type inference for defaultValue
-    static func key<T: Sendable>(id: String, defaultValue: T) -> AnyKey<T> {
+    public static func key<T: Sendable>(id: String, defaultValue: T) -> AnyKey<T> {
         AnyKey(id: id, defaultValue: defaultValue)
     }
 }

@@ -1,18 +1,18 @@
 import Foundation
 import ConcurrencyExtras
 
-public final class StreamsManager: Sendable {
+final class StreamsManager: Sendable {
     private let streams: LockIsolated<[String: [UUID: AnyContinuation]]> = .init([:])
 
-    public init() {}
+    init() {}
 
-    @Sendable public func yield(for key: String, value: any Sendable) {
+    @Sendable func yield(for key: String, value: any Sendable) {
         streams.withValue { continuations in
             continuations[key]?.values.forEach { $0.yield(value) }
         }
     }
 
-    public func getStream<T: Sendable>(for key: String) -> AsyncStream<T> {
+    func getStream<T: Sendable>(for key: String) -> AsyncStream<T> {
         let (stream, continuation) = AsyncStream<T>.makeStream()
         let id = UUID()
 

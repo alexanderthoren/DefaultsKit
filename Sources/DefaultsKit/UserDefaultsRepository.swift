@@ -1,7 +1,20 @@
 public struct UserDefaultsRepository: Sendable {
-    public var get: @Sendable (any Keyable) -> AnySendable
-    public var set: @Sendable (AnySendable, any Keyable) -> Void
-    public var stream: @Sendable (any Keyable) -> AsyncStream<AnySendable>
+    private var get: @Sendable (any Keyable) -> AnySendable
+    private var set: @Sendable (AnySendable, any Keyable) -> Void
+    private var remove: @Sendable (any Keyable) -> Void
+    private var stream: @Sendable (any Keyable) -> AsyncStream<AnySendable>
+    
+    init(
+        get: @escaping @Sendable (any Keyable) -> AnySendable,
+        set: @escaping @Sendable (AnySendable, any Keyable) -> Void,
+        remove: @escaping @Sendable (any Keyable) -> Void,
+        stream: @escaping @Sendable (any Keyable) -> AsyncStream<AnySendable>
+    ) {
+        self.get = get
+        self.set = set
+        self.remove = remove
+        self.stream = stream
+    }
 
     public func get<T: Keyable>(_ key: T) -> T.T {
         let value = get(key)
@@ -13,6 +26,10 @@ public struct UserDefaultsRepository: Sendable {
 
     public func set<T: Keyable>(_ newValue: T.T, _ key: T) {
         set(AnySendable(newValue), key)
+    }
+    
+    public func remove<T: Keyable>(_ key: T) {
+        remove(key)
     }
 
     public func stream<T: Keyable>(_ key: T) -> SendableSharedStream<T.T> {
@@ -39,7 +56,11 @@ public struct UserDefaultsRepository: Sendable {
 }
 
 extension UserDefaultsRepository {
-    public static func liveValue(store: UserDefaultsStore) -> Self {
+    public static var liveValue: Self {
+        liveValue(store: .liveValue)
+    }
+    
+    static func liveValue(store: UserDefaultsStore) -> Self {
         let streamsManager = StreamsManager()
 
         return UserDefaultsRepository(
@@ -49,6 +70,9 @@ extension UserDefaultsRepository {
             set: { newValue, key in
                 store.set(newValue, key.id)
                 streamsManager.yield(for: key.id, value: newValue)
+            },
+            remove: { key in
+                store.remove(key.id)
             },
             stream: { key in
                 streamsManager.getStream(for: key.id)
@@ -63,6 +87,7 @@ extension UserDefaultsRepository {
             UserDefaultsRepository(
                 get: { _ in fatalError("get not implemented") },
                 set: { _, _ in fatalError("set not implemented") },
+                remove: { _ in fatalError("remove not implemented") },
                 stream: { _ in fatalError("stream not implemented") }
             )
         }

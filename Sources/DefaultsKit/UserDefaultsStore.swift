@@ -8,7 +8,7 @@ public struct AnySendable: @unchecked Sendable {
     }
 }
 
-public struct UserDefaultsStore: Sendable {
+struct UserDefaultsStore: Sendable {
     var get: @Sendable (_ key: String) -> AnySendable?
     var set: @Sendable (_ value: AnySendable?, _ key: String) -> Void
     var remove: @Sendable (_ key: String) -> Void

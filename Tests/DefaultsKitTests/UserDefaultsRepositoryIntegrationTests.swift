@@ -59,5 +59,19 @@ struct UserDefaultsRepositoryIntegrationTests {
         #expect(results[0] == [100.0])
         #expect(results[1] == [100.0])
     }
+    
+    @Test func get_real_values() async throws {
+        let sut = UserDefaultsRepository.liveValue
+
+        sut.set(123.45, Keyables.key1)
+        let result: Double = sut.get(Keyables.key1)
+        
+        #expect(result == 123.45)
+        
+        sut.remove(Keyables.key1)
+        
+        let defaultValue: Double = sut.get(Keyables.key1)
+        #expect(defaultValue == 100.0)
+    }
 }
 
