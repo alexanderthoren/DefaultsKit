@@ -4,19 +4,12 @@ A type-safe Swift wrapper around UserDefaults with built-in reactive streams.
 
 ## Why DefaultsKit?
 
-Working with `UserDefaults` directly has several pain points:
+DefaultsKit provides a modern, type-safe wrapper around `UserDefaults` with:
 
-- **String-based keys**: Easy to misspell keys, leading to silent bugs
-- **No type safety**: Values are retrieved as `Any?` and require manual casting
-- **No default values**: You must manually check for `nil` and provide defaults
-- **No built-in observation**: Monitoring changes requires `NotificationCenter` hacks
-
-DefaultsKit solves these by providing:
-
-- **Type-safe keys**: Define keys as types that conform to `Keyable`
-- **Compile-time key checking**: Misspelled keys become compiler errors
-- **Automatic default values**: Each key declares its own default
-- **Reactive streams**: Observe changes via `AsyncStream`
+- **Type-safe keys**: Define keys as types that conform to `Keyable` - misspelled keys become compiler errors
+- **Automatic type inference**: Values are strongly typed, eliminating manual casting
+- **Built-in default values**: Each key declares its own default, no need to check for `nil`
+- **Reactive streams**: Observe changes via `AsyncStream` without `NotificationCenter` hacks
 
 ## Installation
 
@@ -35,30 +28,31 @@ Or add it in Xcode via **File > Add Package Dependency**.
 
 ### 1. Define Your Keys
 
-Create type-safe keys by extending `Keyables`:
+Create type-safe keys using `AnyKey` - the default implementation:
 
 ```swift
 import DefaultsKit
 
 public extension Keyables {
-    static var userName: any Keyable { UserNameKey() }
-    static var theme: any Keyable { ThemeKey() }
-    static var isLoggedIn: any Keyable { IsLoggedInKey() }
-
-    private struct UserNameKey: Keyable {
-        let id: String = "user_name"
-        let defaultValue: String = ""
+    static var userName: AnyKey<String> {
+        .init(id: "user_name", defaultValue: "")
     }
-
-    private struct ThemeKey: Keyable {
-        let id: String = "app_theme"
-        let defaultValue: String = "system"
+    static var theme: AnyKey<String> {
+        .init(id: "app_theme", defaultValue: "system")
     }
-
-    private struct IsLoggedInKey: Keyable {
-        let id: String = "is_logged_in"
-        let defaultValue: Bool = false
+    static var isLoggedIn: AnyKey<Bool> {
+        .init(id: "is_logged_in", defaultValue: false)
     }
+}
+```
+
+Or use the shorthand helper:
+
+```swift
+public extension Keyables {
+    static var userName: AnyKey<String> { .init(id: "user_name", defaultValue: "") }
+    static var theme: AnyKey<String> { .init(id: "app_theme", defaultValue: "system") }
+    static var isLoggedIn: AnyKey<Bool> { .init(id: "is_logged_in", defaultValue: false) }
 }
 ```
 
@@ -67,18 +61,18 @@ public extension Keyables {
 ```swift
 let repository = UserDefaultsRepository.liveValue
 
-// Get a value (returns default if not set)
-let userName: String = repository.get(key: Keyables.userName)
+// Get a value (type inferred from key's defaultValue)
+let userName = repository.get(Keyables.userName)
 
 // Set a new value
-repository.set("Alice", key: Keyables.userName)
+repository.set("Alice", Keyables.userName)
 ```
 
 ### 3. Observe Changes
 
 ```swift
-// Create a stream that emits when the key changes
-let stream: SendableSharedStream<String> = repository.stream(key: Keyables.userName)
+// Create a stream that emits when the key changes (type inferred)
+let stream = repository.stream(Keyables.userName)
 
 for await name in stream {
     print("User name changed to: \(name)")
@@ -87,17 +81,24 @@ for await name in stream {
 
 ## Key Concepts
 
-### Keyable Protocol
+### Keyable Protocol & AnyKey
 
 A `Keyable` is a type-safe wrapper that defines:
 - `id`: The unique string key used in UserDefaults
 - `defaultValue`: The value returned when no value is stored
+
+Most of the time, you'll use `AnyKey<T>` which is a struct that implements `Keyable`:
 
 ```swift
 public protocol Keyable: Identifiable, Sendable {
     associatedtype T
     var id: String { get }
     var defaultValue: T { get }
+}
+
+public struct AnyKey<T: Sendable>: Keyable {
+    public let id: String
+    public let defaultValue: T
 }
 ```
 
@@ -107,9 +108,9 @@ The main interface for interacting with stored values:
 
 | Method | Description |
 |--------|-------------|
-| `get(key:)` | Retrieve a value, returning the default if not set |
-| `set(_:key:)` | Store a new value |
-| `stream(key:)` | Observe changes as an async stream |
+| `get(_:)` | Retrieve a value, returning the default if not set |
+| `set(_:_:)` | Store a new value |
+| `stream(_:)` | Observe changes as an async stream |
 
 ### SendableSharedStream
 
@@ -117,21 +118,11 @@ A shared, sendable async sequence that broadcasts values to multiple subscribers
 
 ## Adding New Keys
 
-To add a new keyable to your app:
-
-1. Create a private struct that conforms to `Keyable`
-2. Set the `id` to a unique string
-3. Set the `defaultValue` to a sensible fallback
-4. Add a static computed property to access it
+To add a new keyable to your app, use `AnyKey`:
 
 ```swift
 public extension Keyables {
-    static var myNewKey: any Keyable { MyNewKey() }
-
-    private struct MyNewKey: Keyable {
-        let id: String = "my_new_key"
-        let defaultValue: Int = 0
-    }
+    static var myNewKey: AnyKey<Int> { .init(id: "my_new_key", defaultValue: 0) }
 }
 ```
 

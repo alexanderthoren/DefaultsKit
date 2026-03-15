@@ -1,28 +1,29 @@
 public struct UserDefaultsRepository: Sendable {
-    public var get: @Sendable (any Keyables.Keyable) -> AnySendable
-    public var set: @Sendable (AnySendable, any Keyables.Keyable) -> Void
-    public var stream: @Sendable (any Keyables.Keyable) -> AsyncStream<AnySendable>
+    public var get: @Sendable (any Keyable) -> AnySendable
+    public var set: @Sendable (AnySendable, any Keyable) -> Void
+    public var stream: @Sendable (any Keyable) -> AsyncStream<AnySendable>
 
-    public func get<U>(key: any Keyables.Keyable) -> U {
-        guard let value = get(key).value as? U else {
-            fatalError("Value for key \(key.id) is not of type \(U.self)")
+    public func get<T: Keyable>(_ key: T) -> T.T {
+        let value = get(key)
+        guard let typedValue = value.value as? T.T else {
+            fatalError("Value for key \(key.id) is not of type \(T.T.self)")
         }
-        return value
+        return typedValue
     }
 
-    public func set<U>(_ newValue: U, key: any Keyables.Keyable) {
+    public func set<T: Keyable>(_ newValue: T.T, _ key: T) {
         set(AnySendable(newValue), key)
     }
 
-    public func stream<U>(key: any Keyables.Keyable) -> SendableSharedStream<U> {
+    public func stream<T: Keyable>(_ key: T) -> SendableSharedStream<T.T> {
         let sourceStream = stream(key)
-        let mappedStream = AsyncStream<U> { continuation in
+        let mappedStream = AsyncStream<T.T> { continuation in
             let task = Task {
-                continuation.yield(get(key: key))
+                continuation.yield(get(key))
 
                 for await anySendable in sourceStream {
-                    guard let value = anySendable.value as? U else {
-                        fatalError("Value for key \(key.id) is not of type \(U.self)")
+                    guard let value = anySendable.value as? T.T else {
+                        fatalError("Value for key \(key.id) is not of type \(T.T.self)")
                     }
                     continuation.yield(value)
                 }

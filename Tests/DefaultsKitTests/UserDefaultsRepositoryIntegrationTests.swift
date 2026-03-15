@@ -8,12 +8,12 @@ struct UserDefaultsRepositoryIntegrationTests {
         store.set = { _, _ in }
         let sut = UserDefaultsRepository.liveValue(store: store)
 
-        let stream: SendableSharedStream<Double> = sut.stream(key: Keyables.key1)
+        let stream: SendableSharedStream<Double> = sut.stream(Keyables.key1)
         let receivedValues = try await stream.captureValues(count: 3) {
-            sut.set(1000.0, key: Keyables.key1)
+            sut.set(1000.0, Keyables.key1)
             await Task.megaYield()
 
-            sut.set(2000.0, key: Keyables.key1)
+            sut.set(2000.0, Keyables.key1)
             await Task.megaYield()
         }.dropFirst()
 
@@ -26,15 +26,15 @@ struct UserDefaultsRepositoryIntegrationTests {
         let sut = UserDefaultsRepository.liveValue(store: store)
 
         let streams: [SendableSharedStream<Double>] = [
-            sut.stream(key: Keyables.key1),
-            sut.stream(key: Keyables.key2),
-            sut.stream(key: Keyables.key3),
+            sut.stream(Keyables.key1),
+            sut.stream(Keyables.key2),
+            sut.stream(Keyables.key3),
         ]
 
         let results = try await captureConcurrentValues(from: streams, actions: [
-            { sut.set(100.0, key: Keyables.key1) },
-            { sut.set(200.0, key: Keyables.key2) },
-            { sut.set(300.0, key: Keyables.key3) },
+            { sut.set(100.0, Keyables.key1) },
+            { sut.set(200.0, Keyables.key2) },
+            { sut.set(300.0, Keyables.key3) },
         ])
 
         #expect(results[0].contains(100))
@@ -48,12 +48,12 @@ struct UserDefaultsRepositoryIntegrationTests {
         let sut = UserDefaultsRepository.liveValue(store: store)
 
         let streams: [SendableSharedStream<Double>] = [
-            sut.stream(key: Keyables.key1),
-            sut.stream(key: Keyables.key1),
+            sut.stream(Keyables.key1),
+            sut.stream(Keyables.key1),
         ]
 
         let results = try await captureConcurrentValues(from: streams, actions: [
-            { sut.set(100.0, key: Keyables.key1) },
+            { sut.set(100.0, Keyables.key1) },
         ])
 
         #expect(results[0] == [100.0])

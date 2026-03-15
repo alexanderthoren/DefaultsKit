@@ -11,7 +11,7 @@ struct UserDefaultsRepositoryUnitTests {
         }
         let sut = UserDefaultsRepository.liveValue(store: store)
 
-        let result: Double = sut.get(key: Keyables.key1)
+        let result: Double = sut.get(Keyables.key1)
         #expect(result == 100.0)
     }
 
@@ -23,7 +23,7 @@ struct UserDefaultsRepositoryUnitTests {
         }
         let sut = UserDefaultsRepository.liveValue(store: store)
 
-        sut.set(850.0, key: Keyables.key1)
+        sut.set(850.0, Keyables.key1)
     }
 
     @Test func stream() async throws {
@@ -31,10 +31,10 @@ struct UserDefaultsRepositoryUnitTests {
         store.set = { _, _ in }
         let sut = UserDefaultsRepository.liveValue(store: store)
 
-        let stream: SendableSharedStream<Double> = sut.stream(key: Keyables.key1)
+        let stream: SendableSharedStream<Double> = sut.stream(Keyables.key1)
 
         let result = try await stream.captureValues(count: 2) {
-            sut.set(100.0, key: Keyables.key1)
+            sut.set(100.0, Keyables.key1)
         }
 
         #expect(result == [100.0, 100.0])
