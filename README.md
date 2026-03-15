@@ -18,7 +18,7 @@ Add DefaultsKit to your project via Swift Package Manager:
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/yourusername/DefaultsKit", from: "1.0.0")
+    .package(url: "https://github.com/alexanderthoren/DefaultsKit.git", from: "1.0.0")
 ]
 ```
 

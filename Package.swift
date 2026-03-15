@@ -5,7 +5,11 @@ import PackageDescription
 
 let package = Package(
     name: "DefaultsKit",
-    platforms: [.macOS(.v15)],
+    platforms: [
+        .macOS(.v15),
+        .iOS(.v16),
+        .watchOS(.v9)
+    ],
     products: [
         .defaultsKit
     ],
